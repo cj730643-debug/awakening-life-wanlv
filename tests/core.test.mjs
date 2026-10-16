@@ -6,8 +6,8 @@ import {talents,pairs,hiddenPatterns} from '../src/catalog.mjs';
 vm.runInThisContext(fs.readFileSync(new URL('../dist/runtime.js',import.meta.url),'utf8'));
 const W=globalThis.Wanlv;let count=0;
 function test(name,fn){fn();count++;console.log('PASS',name);}
-const sample=(ids=[],seed='test')=>{const r=W.createRun('林夜',W.defaults,seed);r.owned=[...ids];r.catalog=ids.map(id=>talents.find(t=>t.id===id));r.current.talents=new Set(ids);ids.forEach(id=>r.stacks[id]=1);W.reveal(r);r.currentDerived=W.factors(r);return r;};
-test('100个基础天赋，字段齐全且ID唯一',()=>{assert.equal(talents.length,100);assert.equal(new Set(talents.map(t=>t.id)).size,100);for(const t of talents)for(const k of ['id','name','description','category','formula','conditions','rarity','conflictTags','synergyTags','rules'])assert.ok(t[k]!==undefined,t.id+':'+k);});
+const sample=(ids=[],seed='test')=>{const r=W.createRun('林夜',W.defaults,seed,undefined,{legacy:true});r.owned=[...ids];r.catalog=ids.map(id=>talents.find(t=>t.id===id));r.current.talents=new Set(ids);ids.forEach(id=>r.stacks[id]=1);W.reveal(r);r.currentDerived=W.factors(r);return r;};
+test('原100个基础天赋与9个事件规则天赋，字段齐全且ID唯一',()=>{assert.equal(talents.length,109);assert.equal(new Set(talents.map(t=>t.id)).size,109);for(const t of talents)for(const k of ['id','name','description','category','formula','conditions','rarity','conflictTags','synergyTags','rules'])assert.ok(t[k]!==undefined,t.id+':'+k);});
 test('属性总和30，每项1到10，拒绝非整数',()=>{assert.ok(W.validateAllocation(W.defaults));assert.ok(!W.validateAllocation({...W.defaults,strength:5.1}));assert.ok(!W.validateAllocation({...W.defaults,strength:0}));assert.ok(!W.validateAllocation({...W.defaults,strength:11}));});
 test('第一世天赋为空，从0岁出生',()=>{const r=sample();assert.equal(r.owned.length,0);assert.equal(r.current.talents.size,0);W.advance(r);assert.equal(r.current.props.current.age,0);assert.ok(r.log[0].text.includes('出生'));});
 test('年龄推进，属性随成长变化',()=>{const r=sample();for(let i=0;i<17;i++){r.phase='running';W.advance(r);}assert.equal(r.current.props.current.age,16);assert.ok(r.current.props.current.intelligence>r.base.intelligence);});

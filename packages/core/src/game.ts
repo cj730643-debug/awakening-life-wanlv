@@ -52,22 +52,24 @@ export function next(
     state: GameState,
     profile: ProfileState,
     rng?: RNG,
+    eventResolver?: (state: GameState) => TriggerResult<Event['id']>,
+    advanceAge = true,
 ): NextResult {
     let s = produce(state, draft => {
-        draft.props = propsEffect(state.props, { age: 1 })
+        draft.props = propsEffect(state.props, { age: advanceAge ? 1 : 0 })
     })
     const age = s.props.current.age
     const tr = ttr(s, profile, rng)
-    const events = ages.get(age)!.event
+    const events = eventResolver ? [] : ages.get(age)!.event
     let event: Event['id'] | null = null
     for (const level of events) {
         const filtered = level.filter(([e]) => ec(e, tr.state, profile))
         if (filtered.length < 1) continue
         event = pickWeight(filtered, rng)
     }
-    if (event === null)
+    if (event === null && !eventResolver)
         throw new Error('No event could be picked for age ' + age)
-    const er = etr(event, tr.state, profile)
+    const er = eventResolver ? eventResolver(tr.state) : etr(event!, tr.state, profile)
     const ar = atr(Ao.Trajectory, er.state, profile)
     const end = ar.state.life < 1
     return {

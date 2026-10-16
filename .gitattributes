@@ -1,0 +1,2 @@
+# Preserve the supplied event manuscript byte-for-byte, including its spacing.
+src/events/source.md -whitespace

@@ -1,6 +1,8 @@
 dist/
 data/
 src/data.js
+src/events/data.js
+src/events/events.json
 src/portrait-views.js
 src/portrait.css
 node_modules/

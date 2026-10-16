@@ -1,6 +1,6 @@
 {
   "name": "awakening-life-wanlv",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "description": "觉醒人生：万律世界 — 基于 lifeRestart 核心改造的9:16中文自动人生模拟游戏",
@@ -8,7 +8,7 @@
   "engines": { "node": ">=24.3.0" },
   "scripts": {
     "build": "node build.mjs",
-    "test": "node build.mjs && node tests/core.test.mjs && node tests/ui.test.mjs",
+    "test": "node build.mjs && node tests/core.test.mjs && node --test tests/event-engine.test.mjs && node tests/integration.test.mjs && node tests/ui.test.mjs",
     "dev": "node scripts/dev.mjs"
   }
 }

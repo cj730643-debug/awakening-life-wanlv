@@ -38,6 +38,21 @@ const ordinary={
 };
 for(const [category,rows] of Object.entries(ordinary))for(const [id,name,target,value]of rows)add('minor_'+id,name,`${{health:'身体抗病能力',combat:'身体行动能力',recovery:'恢复效率',stress:'压力积累',learning:'学习效率',research:'研究效率',social:'社交机会',income:'收入效率',spending:'生活支出',fortune:'正向随机偏移',lifespan:'自然寿命基准'}[target]}${value<1?'略微降低':'略微提高'}。`,category,[{op:'multiply',target,value,formula:`${target} *= ${value.toFixed(2)}`}]);
 if(talents.length!==100)throw new Error('Expected 100 talents, got '+talents.length);
+// Additional event-native rules preserve every existing talent ID and save.
+const ref=ref=>({ref}),op=(op,...args)=>({op,args});
+const eventRule=(stage,when,effects)=>({op:'event',stage,when,effects,formula:'事件条件 → 声明式规则改写'});
+const set=(path,value)=>({op:'set',path,value});
+for(const [id,name,description,stage,when,effects] of [
+ ['count_only_one','不会数数','你只能数到1。面对很多敌人时，你仍认为对面只有一个。',10,true,[set('facts.perceivedOpponents',1),set('facts.numeracy',1)]],
+ ['duel_invincible','单挑无敌','当你认定对面只有一个敌人时，这场对抗必胜。',20,op('all',op('eq',ref('facts.kind'),'combat'),op('eq',ref('facts.perceivedOpponents'),1)),[set('facts.forcedSuccess',true)]],
+ ['never_lie','只能说真话','任何隐瞒都将被真实陈述替代，但别人未必相信。',10,true,[set('facts.truthful',true)]],
+ ['nobody_believes','没人相信','你的证词永远无法直接获得信任。',20,true,[set('facts.credible',false)]],
+ ['fortunate','时来运转','处理机会、学习与危机时获得明显规则加成。',10,true,[{op:'add',path:'facts.bonus',value:4}]],
+ ['memory_carry','前世留痕','第二世起，旧经历为你提供额外判断力。',10,op('gte',ref('life.index'),2),[{op:'add',path:'facts.memoryBonus',value:3}]],
+ ['death_delayed','死亡延期','死亡条件成立时，把本次死亡推迟到以后。',30,op('eq',ref('facts.deathRequested'),true),[set('facts.deathAllowed',false)]],
+ ['first_only','只能选一','人生取向只能落在第一条路径。',10,op('eq',ref('facts.kind'),'choice'),[set('facts.choice',1)]],
+ ['second_chance','第二次选择','第二世起，重新打开第二条人生路径。',20,op('all',op('eq',ref('facts.kind'),'choice'),op('gte',ref('life.index'),2)),[set('facts.choice',2)]]
+])add(id,name,description,'causality',[eventRule(stage,when,effects)],'rare');
 export {talents,pairs};
 export const hiddenPatterns=[
  ['strict','left_damage,right_damage','双极悖论','两种伤害必须互相超越，攻击被提升为无界量。','attack'],

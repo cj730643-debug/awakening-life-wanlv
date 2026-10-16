@@ -1,0 +1,669 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:wanlv:event-bundle:2.0.0",
+  "title": "万律世界可执行事件库 V2",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "const": "wanlv-events/2.0.0"
+    },
+    "language": {
+      "const": "zh-CN"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "count": {
+          "const": 1000
+        }
+      },
+      "required": [
+        "name",
+        "sha256",
+        "count"
+      ],
+      "additionalProperties": false
+    },
+    "semantics": {
+      "type": "object",
+      "properties": {
+        "randomness": {
+          "type": "string"
+        },
+        "selection": {
+          "type": "string"
+        },
+        "links": {
+          "type": "string"
+        },
+        "causality": {
+          "type": "string"
+        },
+        "bounds": {
+          "type": "string"
+        },
+        "death": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "randomness",
+        "selection",
+        "links",
+        "causality",
+        "bounds",
+        "death"
+      ],
+      "additionalProperties": false
+    },
+    "chapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "eventIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^E[0-9]{4}$"
+            },
+            "minItems": 50,
+            "maxItems": 50
+          },
+          "entryPolicy": {
+            "type": "string"
+          },
+          "sourceAgeRange": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "eventIds",
+          "entryPolicy",
+          "sourceAgeRange"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 20,
+      "maxItems": 20
+    },
+    "ruleExamples": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      },
+      "minItems": 1000,
+      "maxItems": 1000
+    }
+  },
+  "required": [
+    "$schema",
+    "version",
+    "language",
+    "source",
+    "semantics",
+    "chapters",
+    "ruleExamples",
+    "events"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "expression": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_.]*$"
+            }
+          },
+          "required": [
+            "ref"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": [
+                "all",
+                "any",
+                "not",
+                "eq",
+                "ne",
+                "gt",
+                "gte",
+                "lt",
+                "lte",
+                "add",
+                "sub",
+                "mul",
+                "div",
+                "min",
+                "max",
+                "neg",
+                "history",
+                "balance"
+              ]
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/expression"
+              },
+              "maxItems": 100
+            }
+          },
+          "required": [
+            "op",
+            "args"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "effect": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": [
+                "set",
+                "add"
+              ]
+            },
+            "path": {
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "op",
+            "path",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": [
+                "grant",
+                "settle"
+              ]
+            },
+            "kind": {
+              "type": "string"
+            },
+            "subject": {
+              "type": "string"
+            },
+            "amount": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "op",
+            "kind",
+            "subject",
+            "amount"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "birth"
+            },
+            "person": {
+              "enum": [
+                "child",
+                "grandchild"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "person"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "outcome": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "when": {
+          "$ref": "#/$defs/expression"
+        },
+        "text": {
+          "type": "string"
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/effect"
+          }
+        },
+        "canonical": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "priority",
+        "when",
+        "text",
+        "effects",
+        "canonical"
+      ],
+      "additionalProperties": false
+    },
+    "rule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "integer"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "when": {
+          "$ref": "#/$defs/expression"
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/effect"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "stage",
+        "priority",
+        "when",
+        "effects",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^E[0-9]{4}$"
+        },
+        "chapter": {
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "I",
+            "J",
+            "K",
+            "L",
+            "M",
+            "N",
+            "O",
+            "P",
+            "Q",
+            "R",
+            "S",
+            "T"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "age": {
+              "type": "string"
+            },
+            "prerequisite": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            },
+            "result": {
+              "type": "string"
+            },
+            "next": {
+              "type": "string"
+            },
+            "branch": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "age",
+            "prerequisite",
+            "text",
+            "result",
+            "next",
+            "branch",
+            "tags"
+          ],
+          "additionalProperties": false
+        },
+        "age": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "anchor": {
+              "enum": [
+                "birth",
+                "death"
+              ]
+            }
+          },
+          "required": [
+            "min",
+            "max",
+            "anchor"
+          ],
+          "additionalProperties": false
+        },
+        "phase": {
+          "enum": [
+            "alive",
+            "epilogue"
+          ]
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^E[0-9]{4}$"
+          },
+          "uniqueItems": true
+        },
+        "when": {
+          "$ref": "#/$defs/expression"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "repeat": {
+          "type": "object",
+          "properties": {
+            "maxPerLife": {
+              "const": 1
+            }
+          },
+          "required": [
+            "maxPerLife"
+          ],
+          "additionalProperties": false
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "friend",
+              "partner",
+              "child",
+              "grandchild"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "facts": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "actualOpponents": {
+              "type": "number"
+            },
+            "perceivedOpponents": {
+              "type": "number"
+            },
+            "bonus": {
+              "type": "number"
+            },
+            "memoryBonus": {
+              "type": "number"
+            },
+            "historySupport": {
+              "type": "number"
+            },
+            "canonicalParent": {
+              "type": "boolean"
+            },
+            "forcedSuccess": {
+              "type": "boolean"
+            },
+            "numeracy": {
+              "type": "number"
+            },
+            "truthful": {
+              "type": "boolean"
+            },
+            "credible": {
+              "type": "boolean"
+            },
+            "protection": {
+              "type": "number"
+            },
+            "deathRequested": {
+              "type": "boolean"
+            },
+            "deathAllowed": {
+              "type": "boolean"
+            },
+            "choice": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "kind",
+            "actualOpponents",
+            "perceivedOpponents",
+            "bonus",
+            "memoryBonus",
+            "historySupport",
+            "canonicalParent",
+            "forcedSuccess",
+            "numeracy",
+            "truthful",
+            "credible",
+            "protection",
+            "deathRequested",
+            "deathAllowed",
+            "choice"
+          ],
+          "additionalProperties": false
+        },
+        "calculation": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "$ref": "#/$defs/expression"
+            },
+            "threshold": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "score",
+            "threshold"
+          ],
+          "additionalProperties": false
+        },
+        "outcomes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/outcome"
+          },
+          "minItems": 2
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "target": {
+                "type": "string",
+                "pattern": "^E[0-9]{4}$"
+              },
+              "relation": {
+                "enum": [
+                  "sequence",
+                  "foreshadow"
+                ]
+              },
+              "when": {
+                "$ref": "#/$defs/expression"
+              },
+              "enqueue": {
+                "const": false
+              }
+            },
+            "required": [
+              "target",
+              "relation",
+              "when",
+              "enqueue"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "causalRequirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "consume": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "subject",
+              "consume"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "chapter",
+        "title",
+        "kind",
+        "source",
+        "age",
+        "phase",
+        "requires",
+        "when",
+        "priority",
+        "repeat",
+        "participants",
+        "facts",
+        "calculation",
+        "outcomes",
+        "links",
+        "tags",
+        "causalRequirements"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
