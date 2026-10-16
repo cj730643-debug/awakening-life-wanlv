@@ -1,0 +1,30 @@
+// DOM contract tests run in a VM. These are not browser visual tests.
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const nodes=new Map(),handlers={},stored=new Map();
+const node=id=>{if(!nodes.has(id))nodes.set(id,{innerHTML:'',value:id==='character-name'?'林夜':id==='character-seed'?'123456':'',textContent:'',focus(){}});return nodes.get(id);};
+const document={getElementById:node,addEventListener(type,fn){handlers[type]=fn;},querySelector(selector){return selector==='.overlay'&&node('modal-root').innerHTML?{}:null;},createElement(){return {click(){},files:[]};}};
+const sandbox={console,Map,Set,Number,Math,Date,JSON,Object,Array,String,Boolean,Error,Infinity,NaN,structuredClone,document,window:{scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>stored.get(k)||null,setItem:(k,v)=>stored.set(k,v)},setInterval(){},setTimeout(){},clearTimeout(){},confirm:()=>true,Blob,URL};
+const context=vm.createContext(sandbox);vm.runInContext(fs.readFileSync(new URL('../dist/runtime.js',import.meta.url),'utf8'),context);vm.runInContext(fs.readFileSync(new URL('../src/app.js',import.meta.url),'utf8'),context);
+const click=(action,extra={})=>{const el={dataset:{action,...extra}};handlers.click({target:{closest:()=>el}});};
+const html=()=>node('app').innerHTML;
+assert.ok(html().includes('创造一个人。'));
+assert.ok(html().includes('class="phone"'));
+assert.ok(!html().includes('class="sidebar"'));
+assert.ok(html().includes('aria-label="底部导航"'));
+click('create');assert.ok(html().includes('塑造你的第一世'));assert.equal((html().match(/data-attribute=/g)||[]).length,7);
+click('start');assert.equal(context.WanlvUI.getRun().current.props.current.age,0);assert.ok(html().includes('天赋：无'));assert.ok(html().includes('人生轨迹'));assert.ok(stored.has('wanlv-life-v1'));
+click('fast');assert.equal(context.WanlvUI.getRun().phase,'dead');assert.ok(html().includes('阅读')||html().includes('的一生'));assert.ok(html().includes('准备下一世'));
+click('next-life');const run=context.WanlvUI.getRun();assert.equal(run.candidates.length,3);assert.equal((html().match(/class="awakening-card"/g)||[]).length,3);assert.ok(!html().includes('hidden_'));
+const chosen=run.candidates.find(id=>id!=='death_refusal');click('choose',{id:chosen});assert.equal(run.lifeIndex,2);assert.ok(run.owned.includes(chosen));assert.ok(html().includes('第 2 世'));
+for(const page of ['home','life','archive','talents','paradoxes','world']){click('nav',{page});assert.ok(html().includes('<main'));assert.ok(!html().includes('NaN'));}
+click('demo');assert.ok(node('modal-root').innerHTML.includes('双极悖论'));assert.ok(node('modal-root').innerHTML.includes('∞'));assert.equal(run.owned.length,1);click('close-modal');assert.equal(node('modal-root').innerHTML,'');
+assert.equal(context.WanlvUI.formatNumber(Infinity),'∞');assert.equal(context.WanlvUI.formatNumber(NaN),'—');
+click('nav',{page:'archive'});const first=run.archive[0];click('open-report',{id:first.id});assert.ok(html().includes('aria-label="享年 '+first.age));
+click('more');assert.ok(node('modal-root').innerHTML.includes('世界纪事'));assert.ok(node('modal-root').innerHTML.includes('导出存档'));
+click('nav',{page:'world'});assert.equal(node('modal-root').innerHTML,'');
+click('nav',{page:'life'});click('details');assert.ok(node('modal-root').innerHTML.includes('累计天赋'));click('close-modal');
+const css=fs.readFileSync(new URL('../src/style.css',import.meta.url),'utf8');assert.ok(css.includes('aspect-ratio:9/16'));assert.ok(css.includes('overflow:hidden'));assert.ok(css.includes('repeat(7,minmax(0,1fr))'));
+assert.ok(!/<(?:script|link)[^>]+(?:src|href)="https?:/i.test(fs.readFileSync(new URL('../dist/Awakening_Life_Wanlv.html',import.meta.url),'utf8')));
+console.log('PASS: 首页、创建、人生、报告、觉醒、档案、天赋图鉴、悖论图鉴、世界历史、存档及演示交互合同。');

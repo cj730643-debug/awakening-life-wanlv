@@ -1,0 +1,9 @@
+dist/
+data/
+src/data.js
+src/portrait-views.js
+src/portrait.css
+node_modules/
+*.log
+.DS_Store
+Wanlv_Save_*.json
